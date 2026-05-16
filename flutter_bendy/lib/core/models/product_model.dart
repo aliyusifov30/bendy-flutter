@@ -5,28 +5,80 @@ import 'package:flutter/material.dart';
 class Product {
   final int id;
   final String name;
-  final double price;
-  final double? originalPrice;
+  final String description;
+
+  // Pricing
+  final double retailPrice;      // Pərakəndə qiymət
+  final double wholesalePrice;   // Topdan qiymət
+  final double? originalPrice;   // Endirimli məhsulda əsl qiymət
+
+  // Category
+  final int categoryId;
+  final int? subCategoryId;
   final String category;
+
+  // Images — ilk şəkil poster/thumbnail kimi işlədilir
+  final List<String> images;
+
+  // Flags
   final bool isBestSeller;
+  final bool isActive;
+
+  // Visual fallback (real şəkil olmadıqda gradient göstər)
   final List<Color> gradientColors;
+
+  // Stats
   final double rating;
   final int reviewCount;
 
   const Product({
     required this.id,
     required this.name,
-    required this.price,
+    this.description = '',
+    required this.retailPrice,
+    required this.wholesalePrice,
     this.originalPrice,
+    required this.categoryId,
+    this.subCategoryId,
     required this.category,
+    this.images = const [],
     this.isBestSeller = false,
+    this.isActive = true,
     required this.gradientColors,
     this.rating = 4.5,
     this.reviewCount = 0,
   });
 
-  bool get isDiscounted => originalPrice != null && originalPrice! > price;
+  bool get isDiscounted =>
+      originalPrice != null && originalPrice! > retailPrice;
 
   double get discountPercent =>
-      isDiscounted ? ((originalPrice! - price) / originalPrice! * 100) : 0;
+      isDiscounted ? ((originalPrice! - retailPrice) / originalPrice! * 100) : 0;
+
+  String get posterImage => images.isNotEmpty
+      ? images.first
+      : 'https://picsum.photos/seed/product$id/600/400';
+
+  factory Product.fromJson(Map<String, dynamic> json) => Product(
+        id: json['id'],
+        name: json['name'] ?? '',
+        description: json['description'] ?? '',
+        retailPrice: (json['retailPrice'] as num).toDouble(),
+        wholesalePrice: (json['wholesalePrice'] as num).toDouble(),
+        originalPrice: json['originalPrice'] != null
+            ? (json['originalPrice'] as num).toDouble()
+            : null,
+        categoryId: json['categoryId'] ?? 0,
+        subCategoryId: json['subCategoryId'],
+        category: json['categoryName'] ?? '',
+        images: json['images'] != null
+            ? List<String>.from(json['images'])
+            : [],
+        isBestSeller: json['isBestSeller'] ?? false,
+        isActive: json['isActive'] ?? true,
+        // API-dan gələndə gradient göstərilmir — şəkil var
+        gradientColors: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
+        rating: (json['rating'] as num?)?.toDouble() ?? 4.5,
+        reviewCount: json['reviewCount'] ?? 0,
+      );
 }

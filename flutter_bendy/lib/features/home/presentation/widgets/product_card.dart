@@ -180,7 +180,7 @@ class ProductCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '₼${product.price.toInt()}',
+                      '₼${product.retailPrice.toInt()}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

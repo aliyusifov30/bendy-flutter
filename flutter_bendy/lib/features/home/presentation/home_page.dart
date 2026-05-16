@@ -4,8 +4,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/data/mock_data.dart';
+import '../../../core/models/category_model.dart';
 import '../../../core/models/product_model.dart';
+import '../../../core/providers/providers.dart';
 import 'widgets/product_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -18,6 +19,8 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final PageController _bannerCtrl = PageController();
   int _currentBanner = 0;
+  int? _selectedSubCat; // seçilmiş subcategory
+  int? _selectedCategoryId; // seçilmiş kateqoriya
   Timer? _timer;
 
   final List<_BannerData> _banners = const [
@@ -41,39 +44,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     ),
   ];
 
-  final List<_CategoryData> _categories = const [
-    _CategoryData(
-        name: 'Elektrik\nAlətlər',
-        icon: Icons.electrical_services_rounded,
-        color: Color(0xFF1565C0)),
-    _CategoryData(
-        name: 'Batareya\nAlətlər',
-        icon: Icons.battery_charging_full_rounded,
-        color: Color(0xFF2E7D32)),
-    _CategoryData(
-        name: 'Qaynaq\nDəstləri',
-        icon: Icons.hardware_rounded,
-        color: Color(0xFFBF360C)),
-    _CategoryData(
-        name: 'Qoruyucu\nVasitə',
-        icon: Icons.shield_rounded,
-        color: Color(0xFF4A148C)),
-    _CategoryData(
-        name: 'Kəsici\nAlətlər',
-        icon: Icons.content_cut_rounded,
-        color: Color(0xFF006064)),
-  ];
-
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       final next = (_currentBanner + 1) % _banners.length;
-      _bannerCtrl.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
+      _bannerCtrl.animateToPage(next,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
     });
   }
 
@@ -96,22 +73,29 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             _buildBannerSlider(),
             const SizedBox(height: 22),
-            _buildCategories(),
+            // Categories temporarily disabled on the home page.
+            // _buildCategorySection(),
+            // const SizedBox(height: 22),
+            /*
+            if (_selectedCategoryId != null || _selectedSubCat != null)
+              _buildProductSection(
+                _selectedSubCat != null
+                    ? 'Seçilmiş subkateqoriya məhsulları'
+                    : 'Seçilmiş kateqoriya məhsulları',
+                ref.watch(categoryProductsProvider((
+                  categoryId: _selectedCategoryId,
+                  subCategoryId: _selectedSubCat,
+                ))),
+              ),
             const SizedBox(height: 22),
-            _buildSection(
-              title: 'Məhsullar',
-              products: mockProducts,
-            ),
+            */
+            _buildProductSection('Məhsullar', ref.watch(allProductsProvider)),
             const SizedBox(height: 22),
-            _buildSection(
-              title: 'Çox Satılanlar 🔥',
-              products: mockProducts.where((p) => p.isBestSeller).toList(),
-            ),
+            _buildProductSection(
+                'Çox Satılanlar 🔥', ref.watch(bestSellersProvider)),
             const SizedBox(height: 22),
-            _buildSection(
-              title: 'Endirimli Məhsullar 🏷️',
-              products: mockProducts.where((p) => p.isDiscounted).toList(),
-            ),
+            _buildProductSection(
+                'Endirimli Məhsullar 🏷️', ref.watch(discountedProvider)),
             const SizedBox(height: 32),
           ],
         ),
@@ -134,11 +118,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            // Logo (small)
-            Image.asset('assets/images/logo.png', height: 30),            
+            Image.asset('assets/images/logo.png', height: 30),
             const SizedBox(width: 10),
-
-            // Search bar
             Expanded(
               child: Container(
                 height: 38,
@@ -150,17 +131,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: Row(
                   children: [
                     const SizedBox(width: 10),
-                    Icon(Icons.search_rounded,
-                        color: Colors.grey[400], size: 18),
+                    Icon(Icons.search_rounded, color: Colors.grey[400], size: 18),
                     const SizedBox(width: 6),
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Məhsul axtar...',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 13,
-                          ),
+                          hintStyle:
+                              TextStyle(color: Colors.grey[400], fontSize: 13),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding:
@@ -173,17 +151,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             const SizedBox(width: 4),
-
-            // Notification icon
             Stack(
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Color(0xFF1565C0),
-                    size: 24,
-                  ),
+                  icon: const Icon(Icons.notifications_outlined,
+                      color: Color(0xFF1565C0), size: 24),
                   onPressed: () {},
                 ),
                 Positioned(
@@ -237,17 +210,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   child: Stack(
                     children: [
-                      // Background icon
                       Positioned(
                         right: -16,
                         bottom: -16,
-                        child: Icon(
-                          b.icon,
-                          size: 140,
-                          color: Colors.white.withOpacity(0.1),
-                        ),
+                        child: Icon(b.icon,
+                            size: 140,
+                            color: Colors.white.withOpacity(0.1)),
                       ),
-                      // Text content
                       Padding(
                         padding: const EdgeInsets.all(22),
                         child: Column(
@@ -257,20 +226,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               b.title,
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                height: 1.2,
-                              ),
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              b.subtitle,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 12,
-                              ),
-                            ),
+                            Text(b.subtitle,
+                                style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12)),
                             const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -281,14 +246,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 border: Border.all(
                                     color: Colors.white.withOpacity(0.4)),
                               ),
-                              child: const Text(
-                                'Kəşfet →',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              child: const Text('Kəşfet →',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ),
@@ -300,8 +262,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
           ),
         ),
-
-        // Dots
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -325,59 +285,219 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // ── Categories ───────────────────────────────────────────────────────────
+  // ── Categories + Subcategories ───────────────────────────────────────────
 
-  Widget _buildCategories() {
+  // ignore: unused_element
+  Widget _buildCategorySection() {
+    final categoriesAsync = ref.watch(categoriesProvider);
+
+    return categoriesAsync.when(
+      data: (cats) => _CategoriesSection(
+        categories: cats,
+        selectedCategoryId: _selectedCategoryId,
+        selectedSubCat: _selectedSubCat,
+        onCategorySelected: (id) => setState(() {
+          if (_selectedCategoryId == id) {
+            _selectedCategoryId = null;
+            _selectedSubCat = null;
+          } else {
+            _selectedCategoryId = id;
+            _selectedSubCat = null;
+          }
+        }),
+        onSubCatSelected: (id) => setState(() {
+          _selectedSubCat = _selectedSubCat == id ? null : id;
+          if (_selectedSubCat != null) {
+            final selectedCategory = cats
+                .firstWhere((category) => category.subCategories
+                    .any((subCategory) => subCategory.id == _selectedSubCat));
+            _selectedCategoryId = selectedCategory.id;
+          }
+        }),
+      ),
+      loading: () => const SizedBox(
+        height: 92,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF1565C0), strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  // ── Product section ──────────────────────────────────────────────────────
+
+  Widget _buildProductSection(
+      String title, AsyncValue<List<Product>> productsAsync) {
+    return productsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
+        final preview =
+            products.length > 4 ? products.sublist(0, 4) : products;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A2E))),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2FD),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('Hamısı →',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF1565C0),
+                              fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.63,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: preview.length,
+              itemBuilder: (_, i) => ProductCard(product: preview[i]),
+            ),
+          ],
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(
+            child: CircularProgressIndicator(
+                color: Color(0xFF1565C0), strokeWidth: 2)),
+      ),
+      error: (e, _) => Center(child: Text(e.toString())),
+    );
+  }
+}
+
+// ── Categories section widget ─────────────────────────────────────────────────
+
+class _CategoriesSection extends StatefulWidget {
+  final List<Category> categories;
+  final int? selectedCategoryId;
+  final int? selectedSubCat;
+  final ValueChanged<int> onCategorySelected;
+  final ValueChanged<int> onSubCatSelected;
+
+  const _CategoriesSection({
+    required this.categories,
+    required this.selectedCategoryId,
+    required this.selectedSubCat,
+    required this.onCategorySelected,
+    required this.onSubCatSelected,
+  });
+
+  @override
+  State<_CategoriesSection> createState() => _CategoriesSectionState();
+}
+
+class _CategoriesSectionState extends State<_CategoriesSection> {
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Kateqoriyalar',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          child: Text('Kateqoriyalar',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E))),
         ),
         const SizedBox(height: 12),
+
+        // ── Category row ───────────────────────────────────────────
         SizedBox(
           height: 92,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             physics: const BouncingScrollPhysics(),
-            itemCount: _categories.length,
+            itemCount: widget.categories.length,
             itemBuilder: (_, i) {
-              final cat = _categories[i];
+              final cat = widget.categories[i];
+              final isExpanded = widget.selectedCategoryId == cat.id;
+
               return GestureDetector(
-                onTap: () {},
+                onTap: () => widget.onCategorySelected(cat.id),
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
                   width: 78,
                   child: Column(
                     children: [
-                      Container(
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         width: 58,
                         height: 58,
                         decoration: BoxDecoration(
-                          color: cat.color.withOpacity(0.1),
+                          color: isExpanded
+                              ? cat.color
+                              : cat.color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                              color: cat.color.withOpacity(0.2), width: 1),
+                              color: isExpanded
+                                  ? cat.color
+                                  : cat.color.withOpacity(0.2)),
+                          boxShadow: isExpanded
+                              ? [
+                                  BoxShadow(
+                                    color: cat.color.withOpacity(0.35),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ]
+                              : [],
                         ),
-                        child: Icon(cat.icon, color: cat.color, size: 26),
+                        child: cat.iconUrl != null
+                            ? Image.network(cat.iconUrl!,
+                                width: 28,
+                                height: 28,
+                                color: isExpanded ? Colors.white : cat.color)
+                            : Icon(cat.fallbackIcon,
+                                color:
+                                    isExpanded ? Colors.white : cat.color,
+                                size: 26),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         cat.name,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF555566),
+                          fontWeight: isExpanded
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isExpanded
+                              ? cat.color
+                              : const Color(0xFF555566),
                           height: 1.2,
                         ),
                       ),
@@ -388,98 +508,87 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
           ),
         ),
-      ],
-    );
-  }
 
-  // ── Product Section ──────────────────────────────────────────────────────
+        // ── Subcategory chips ──────────────────────────────────────
+        if (widget.selectedCategoryId != null) ...[
+          const SizedBox(height: 10),
+          () {
+            final subs = widget.categories
+                .firstWhere((c) => c.id == widget.selectedCategoryId)
+                .subCategories;
+            if (subs.isEmpty) return const SizedBox.shrink();
+            final catColor = widget.categories
+                .firstWhere((c) => c.id == widget.selectedCategoryId)
+                .color;
 
-  Widget _buildSection({required String title, required List<Product> products}) {
-    if (products.isEmpty) return const SizedBox.shrink();
+            return SizedBox(
+              height: 36,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                physics: const BouncingScrollPhysics(),
+                itemCount: subs.length,
+                itemBuilder: (_, i) {
+                  final sub = subs[i];
+                  final isSelected = widget.selectedSubCat == sub.id;
 
-    // Show max 4 in preview; all on "Hamısı" tap
-    final preview = products.length > 4 ? products.sublist(0, 4) : products;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // TODO: Navigate to full product list
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Hamısı →',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF1565C0),
-                      fontWeight: FontWeight.w600,
+                  return GestureDetector(
+                    onTap: () => widget.onSubCatSelected(sub.id),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color:
+                            isSelected ? catColor : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? catColor
+                              : const Color(0xFFE4E4E4),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: catColor.withOpacity(0.25),
+                                  blurRadius: 6,
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Text(
+                        sub.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected ? Colors.white : const Color(0xFF555566),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.68,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: preview.length,
-          itemBuilder: (_, i) => ProductCard(product: preview[i]),
-        ),
+            );
+          }(),
+        ],
       ],
     );
   }
 }
 
-// ── Data classes ─────────────────────────────────────────────────────────────
+// ── Banner data ───────────────────────────────────────────────────────────────
 
 class _BannerData {
   final String title;
   final String subtitle;
   final List<Color> colors;
   final IconData icon;
-
-  const _BannerData({
-    required this.title,
-    required this.subtitle,
-    required this.colors,
-    required this.icon,
-  });
-}
-
-class _CategoryData {
-  final String name;
-  final IconData icon;
-  final Color color;
-
-  const _CategoryData(
-      {required this.name, required this.icon, required this.color});
+  const _BannerData(
+      {required this.title,
+      required this.subtitle,
+      required this.colors,
+      required this.icon});
 }

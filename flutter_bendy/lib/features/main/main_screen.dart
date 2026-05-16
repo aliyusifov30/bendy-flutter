@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../cart/providers/cart_provider.dart';
+import '../categories/presentation/categories_page.dart';
 import '../home/presentation/home_page.dart';
+import '../more/more_page.dart';
+import '../wishlist/presentation/wishlist_page.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -18,10 +21,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   final List<Widget> _pages = const [
     HomePage(),
-    _PlaceholderPage(label: 'Kateqoriyalar', icon: Icons.grid_view_rounded),
-    _PlaceholderPage(label: 'Sevimlilər', icon: Icons.favorite_rounded),
+    CategoriesPage(),
+    WishlistPage(),
     _PlaceholderPage(label: 'Səbət', icon: Icons.shopping_cart_rounded),
-    _PlaceholderPage(label: 'Daha çoxu', icon: Icons.more_horiz_rounded),
+    MorePage(),
   ];
 
   @override

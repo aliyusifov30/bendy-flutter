@@ -11,12 +11,10 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: false,
     scaffoldBackgroundColor: background,
-
     colorScheme: const ColorScheme.light(
       primary: primary,
       secondary: primaryLight,
     ),
-
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -27,7 +25,6 @@ class AppTheme {
         statusBarIconBrightness: Brightness.dark,
       ),
     ),
-
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
@@ -38,18 +35,6 @@ class AppTheme {
         ),
       ),
     ),
-
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: background,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    ),
-
     fontFamily: 'Roboto',
   );
 }
