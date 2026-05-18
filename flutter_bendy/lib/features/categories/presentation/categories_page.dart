@@ -14,24 +14,29 @@ class CategoriesPage extends ConsumerStatefulWidget {
 }
 
 class _CategoriesPageState extends ConsumerState<CategoriesPage> {
-  int? _selectedCategoryId;
-  int? _selectedSubCategoryId;
+  // selection moved to Riverpod providers
 
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
+    final selectedSubCategoryId = ref.watch(selectedSubCategoryIdProvider);
     final productsAsync = ref.watch(
       categoryProductsProvider((
-        categoryId: _selectedCategoryId,
-        subCategoryId: _selectedSubCategoryId,
+        categoryId: selectedCategoryId,
+        subCategoryId: selectedSubCategoryId,
       )),
     );
 
-    final sectionTitle = _selectedSubCategoryId != null
-        ? 'Subkateqoriya Məhsulları'
-        : _selectedCategoryId != null
-            ? 'Kateqoriya Məhsulları'
-            : 'Bütün Məhsullar';
+    final subcategoriesAsync = selectedCategoryId != null
+      ? ref.watch(subcategoriesProvider(selectedCategoryId!))
+      : null;
+
+    final sectionTitle = selectedSubCategoryId != null
+      ? 'Subkateqoriya Məhsulları'
+      : selectedCategoryId != null
+        ? 'Kateqoriya Məhsulları'
+        : 'Bütün Məhsullar';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -74,17 +79,17 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                   itemCount: categories.length,
                   itemBuilder: (_, index) {
                     final cat = categories[index];
-                    final isSelected = cat.id == _selectedCategoryId;
+                    final isSelected = cat.id == selectedCategoryId;
                     return GestureDetector(
-                      onTap: () => setState(() {
-                        if (_selectedCategoryId == cat.id) {
-                          _selectedCategoryId = null;
-                          _selectedSubCategoryId = null;
+                      onTap: () {
+                        if (selectedCategoryId == cat.id) {
+                          ref.read(selectedCategoryIdProvider.notifier).state = null;
+                          ref.read(selectedSubCategoryIdProvider.notifier).state = null;
                         } else {
-                          _selectedCategoryId = cat.id;
-                          _selectedSubCategoryId = null;
+                          ref.read(selectedCategoryIdProvider.notifier).state = cat.id;
+                          ref.read(selectedSubCategoryIdProvider.notifier).state = null;
                         }
-                      }),
+                      },
                       child: Container(
                         width: 84,
                         margin: EdgeInsets.only(right: index == categories.length - 1 ? 0 : 12),
@@ -105,21 +110,11 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                                       : cat.color.withOpacity(0.3),
                                 ),
                               ),
-                              child: cat.iconUrl != null
-                                  ? Image.network(
-                                      cat.iconUrl!,
-                                      width: 30,
-                                      height: 30,
-                                      color:
-                                          isSelected ? Colors.white : cat.color,
-                                    )
-                                  : Icon(
-                                      cat.fallbackIcon,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : cat.color,
-                                      size: 28,
-                                    ),
+                              child: Icon(
+                                cat.iconData,
+                                color: isSelected ? Colors.white : cat.color,
+                                size: 28,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -143,9 +138,76 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                   },
                 ),
               ),
-              if (_selectedCategoryId != null) ...[
+              if (selectedCategoryId != null) ...[
                 const SizedBox(height: 18),
-                _buildSubcategoryChips(categories),
+                subcategoriesAsync == null
+                    ? const SizedBox.shrink()
+                    : subcategoriesAsync.when(
+                        data: (subs) {
+                          if (subs.isEmpty) {
+                            return const Text(
+                              'Bu kateqoriyaya aid subkateqoriya yoxdur.',
+                              style: TextStyle(fontSize: 14, color: Color(0xFF555566)),
+                            );
+                          }
+
+                          final category = categories.firstWhere((c) => c.id == selectedCategoryId);
+
+                          return SizedBox(
+                            height: 40,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: subs.length,
+                              itemBuilder: (_, index) {
+                                final sub = subs[index];
+                                final isSelected = sub.id == selectedSubCategoryId;
+                                return Padding(
+                                  padding: EdgeInsets.only(right: index == subs.length - 1 ? 0 : 10),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (selectedSubCategoryId == sub.id) {
+                                        ref.read(selectedSubCategoryIdProvider.notifier).state = null;
+                                      } else {
+                                        ref.read(selectedSubCategoryIdProvider.notifier).state = sub.id;
+                                      }
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? category.color : Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected ? category.color : const Color(0xFFE4E4E4),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        sub.name,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: isSelected ? Colors.white : const Color(0xFF555566),
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox(
+                          height: 40,
+                          child: Center(
+                            child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0))),
+                          ),
+                        ),
+                        error: (err, stack) => Text(err.toString(), style: const TextStyle(color: Colors.red)),
+                      ),
               ],
               const SizedBox(height: 24),
               Text(
@@ -173,57 +235,8 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
   }
 
   Widget _buildSubcategoryChips(List<Category> categories) {
-    final category = categories.firstWhere((c) => c.id == _selectedCategoryId);
-    if (category.subCategories.isEmpty) {
-      return const Text(
-        'Bu kateqoriyaya aid subkateqoriya yoxdur.',
-        style: TextStyle(fontSize: 14, color: Color(0xFF555566)),
-      );
-    }
-
-    return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: category.subCategories.length,
-        itemBuilder: (_, index) {
-          final sub = category.subCategories[index];
-          final isSelected = sub.id == _selectedSubCategoryId;
-          return Padding(
-            padding: EdgeInsets.only(right: index == category.subCategories.length - 1 ? 0 : 10),
-            child: GestureDetector(
-              onTap: () => setState(() {
-                if (_selectedSubCategoryId == sub.id) {
-                  _selectedSubCategoryId = null;
-                } else {
-                  _selectedSubCategoryId = sub.id;
-                }
-              }),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? category.color : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? category.color : const Color(0xFFE4E4E4),
-                  ),
-                ),
-                child: Text(
-                  sub.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : const Color(0xFF555566),
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+    // This method is no longer used; subcategories are rendered inline in build()
+    return const SizedBox.shrink();
   }
 
   Widget _buildProductGrid(AsyncValue<List<Product>> productsAsync) {

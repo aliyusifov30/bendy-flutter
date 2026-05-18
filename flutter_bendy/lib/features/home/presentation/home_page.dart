@@ -19,8 +19,8 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final PageController _bannerCtrl = PageController();
   int _currentBanner = 0;
-  int? _selectedSubCat; // seçilmiş subcategory
-  int? _selectedCategoryId; // seçilmiş kateqoriya
+  String? _selectedSubCat; // seçilmiş subcategory
+  String? _selectedCategoryId; // seçilmiş kateqoriya
   Timer? _timer;
 
   final List<_BannerData> _banners = const [
@@ -49,8 +49,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       final next = (_currentBanner + 1) % _banners.length;
-      _bannerCtrl.animateToPage(next,
-          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+      _bannerCtrl.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -92,10 +95,14 @@ class _HomePageState extends ConsumerState<HomePage> {
             _buildProductSection('Məhsullar', ref.watch(allProductsProvider)),
             const SizedBox(height: 22),
             _buildProductSection(
-                'Çox Satılanlar 🔥', ref.watch(bestSellersProvider)),
+              'Çox Satılanlar 🔥',
+              ref.watch(bestSellersProvider),
+            ),
             const SizedBox(height: 22),
             _buildProductSection(
-                'Endirimli Məhsullar 🏷️', ref.watch(discountedProvider)),
+              'Endirimli Məhsullar 🏷️',
+              ref.watch(discountedProvider),
+            ),
             const SizedBox(height: 32),
           ],
         ),
@@ -131,18 +138,25 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: Row(
                   children: [
                     const SizedBox(width: 10),
-                    Icon(Icons.search_rounded, color: Colors.grey[400], size: 18),
+                    Icon(
+                      Icons.search_rounded,
+                      color: Colors.grey[400],
+                      size: 18,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Məhsul axtar...',
-                          hintStyle:
-                              TextStyle(color: Colors.grey[400], fontSize: 13),
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 13,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
@@ -155,8 +169,11 @@ class _HomePageState extends ConsumerState<HomePage> {
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Color(0xFF1565C0), size: 24),
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF1565C0),
+                    size: 24,
+                  ),
                   onPressed: () {},
                 ),
                 Positioned(
@@ -213,9 +230,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                       Positioned(
                         right: -16,
                         bottom: -16,
-                        child: Icon(b.icon,
-                            size: 140,
-                            color: Colors.white.withOpacity(0.1)),
+                        child: Icon(
+                          b.icon,
+                          size: 140,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(22),
@@ -226,31 +245,41 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               b.title,
                               style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.2),
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                              ),
                             ),
                             const SizedBox(height: 8),
-                            Text(b.subtitle,
-                                style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontSize: 12)),
+                            Text(
+                              b.subtitle,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 7),
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                    color: Colors.white.withOpacity(0.4)),
+                                  color: Colors.white.withOpacity(0.4),
+                                ),
                               ),
-                              child: const Text('Kəşfet →',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600)),
+                              child: const Text(
+                                'Kəşfet →',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -308,9 +337,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         onSubCatSelected: (id) => setState(() {
           _selectedSubCat = _selectedSubCat == id ? null : id;
           if (_selectedSubCat != null) {
-            final selectedCategory = cats
-                .firstWhere((category) => category.subCategories
-                    .any((subCategory) => subCategory.id == _selectedSubCat));
+            final selectedCategory = cats.firstWhere(
+              (category) => category.subCategories.any(
+                (subCategory) => subCategory.id == _selectedSubCat,
+              ),
+            );
             _selectedCategoryId = selectedCategory.id;
           }
         }),
@@ -319,7 +350,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         height: 92,
         child: Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF1565C0), strokeWidth: 2,
+            color: Color(0xFF1565C0),
+            strokeWidth: 2,
           ),
         ),
       ),
@@ -330,12 +362,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   // ── Product section ──────────────────────────────────────────────────────
 
   Widget _buildProductSection(
-      String title, AsyncValue<List<Product>> productsAsync) {
+    String title,
+    AsyncValue<List<Product>> productsAsync,
+  ) {
     return productsAsync.when(
       data: (products) {
         if (products.isEmpty) return const SizedBox.shrink();
-        final preview =
-            products.length > 4 ? products.sublist(0, 4) : products;
+        final preview = products.length > 4 ? products.sublist(0, 4) : products;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,25 +378,33 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A2E))),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () {},
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE3F2FD),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('Hamısı →',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF1565C0),
-                              fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Hamısı →',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1565C0),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -389,8 +430,11 @@ class _HomePageState extends ConsumerState<HomePage> {
       loading: () => const Padding(
         padding: EdgeInsets.all(32),
         child: Center(
-            child: CircularProgressIndicator(
-                color: Color(0xFF1565C0), strokeWidth: 2)),
+          child: CircularProgressIndicator(
+            color: Color(0xFF1565C0),
+            strokeWidth: 2,
+          ),
+        ),
       ),
       error: (e, _) => Center(child: Text(e.toString())),
     );
@@ -401,10 +445,10 @@ class _HomePageState extends ConsumerState<HomePage> {
 
 class _CategoriesSection extends StatefulWidget {
   final List<Category> categories;
-  final int? selectedCategoryId;
-  final int? selectedSubCat;
-  final ValueChanged<int> onCategorySelected;
-  final ValueChanged<int> onSubCatSelected;
+  final String? selectedCategoryId;
+  final String? selectedSubCat;
+  final ValueChanged<String> onCategorySelected;
+  final ValueChanged<String> onSubCatSelected;
 
   const _CategoriesSection({
     required this.categories,
@@ -426,11 +470,14 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Kateqoriyalar',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E))),
+          child: Text(
+            'Kateqoriyalar',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -463,28 +510,25 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
                               : cat.color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                              color: isExpanded
-                                  ? cat.color
-                                  : cat.color.withOpacity(0.2)),
+                            color: isExpanded
+                                ? cat.color
+                                : cat.color.withOpacity(0.2),
+                          ),
                           boxShadow: isExpanded
                               ? [
                                   BoxShadow(
                                     color: cat.color.withOpacity(0.35),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
-                                  )
+                                  ),
                                 ]
                               : [],
                         ),
-                        child: cat.iconUrl != null
-                            ? Image.network(cat.iconUrl!,
-                                width: 28,
-                                height: 28,
-                                color: isExpanded ? Colors.white : cat.color)
-                            : Icon(cat.fallbackIcon,
-                                color:
-                                    isExpanded ? Colors.white : cat.color,
-                                size: 26),
+                        child: Icon(
+                          cat.iconData,
+                          color: isExpanded ? Colors.white : cat.color,
+                          size: 26,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -538,10 +582,11 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
                       duration: const Duration(milliseconds: 200),
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color:
-                            isSelected ? catColor : Colors.white,
+                        color: isSelected ? catColor : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
@@ -553,7 +598,7 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
                                 BoxShadow(
                                   color: catColor.withOpacity(0.25),
                                   blurRadius: 6,
-                                )
+                                ),
                               ]
                             : [],
                       ),
@@ -564,7 +609,9 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
                           fontWeight: isSelected
                               ? FontWeight.w700
                               : FontWeight.w500,
-                          color: isSelected ? Colors.white : const Color(0xFF555566),
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF555566),
                         ),
                       ),
                     ),
@@ -586,9 +633,10 @@ class _BannerData {
   final String subtitle;
   final List<Color> colors;
   final IconData icon;
-  const _BannerData(
-      {required this.title,
-      required this.subtitle,
-      required this.colors,
-      required this.icon});
+  const _BannerData({
+    required this.title,
+    required this.subtitle,
+    required this.colors,
+    required this.icon,
+  });
 }

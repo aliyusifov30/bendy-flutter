@@ -13,34 +13,33 @@ class CartItem {
       CartItem(product: product, quantity: quantity ?? this.quantity);
 }
 
-final cartProvider =
-    StateNotifierProvider<CartNotifier, Map<int, CartItem>>((ref) {
-  return CartNotifier();
-});
+final cartProvider = StateNotifierProvider<CartNotifier, Map<String, CartItem>>(
+  (ref) {
+    return CartNotifier();
+  },
+);
 
-class CartNotifier extends StateNotifier<Map<int, CartItem>> {
+class CartNotifier extends StateNotifier<Map<String, CartItem>> {
   CartNotifier() : super({});
 
   void addItem(Product product) {
     if (state.containsKey(product.id)) {
       state = {
         ...state,
-        product.id: state[product.id]!
-            .copyWith(quantity: state[product.id]!.quantity + 1),
+        product.id: state[product.id]!.copyWith(
+          quantity: state[product.id]!.quantity + 1,
+        ),
       };
     } else {
-      state = {
-        ...state,
-        product.id: CartItem(product: product, quantity: 1)
-      };
+      state = {...state, product.id: CartItem(product: product, quantity: 1)};
     }
   }
 
-  void removeItem(int productId) {
+  void removeItem(String productId) {
     if (!state.containsKey(productId)) return;
     final current = state[productId]!;
     if (current.quantity <= 1) {
-      final newState = Map<int, CartItem>.from(state);
+      final newState = Map<String, CartItem>.from(state);
       newState.remove(productId);
       state = newState;
     } else {
@@ -51,17 +50,19 @@ class CartNotifier extends StateNotifier<Map<int, CartItem>> {
     }
   }
 
-  void clearItem(int productId) {
-    final newState = Map<int, CartItem>.from(state);
+  void clearItem(String productId) {
+    final newState = Map<String, CartItem>.from(state);
     newState.remove(productId);
     state = newState;
   }
 
-  int getQuantity(int productId) => state[productId]?.quantity ?? 0;
+  int getQuantity(String productId) => state[productId]?.quantity ?? 0;
 
   int get totalCount =>
       state.values.fold(0, (sum, item) => sum + item.quantity);
 
-  double get totalPrice =>
-      state.values.fold(0, (sum, item) => sum + item.product.retailPrice * item.quantity);
+  double get totalPrice => state.values.fold(
+    0,
+    (sum, item) => sum + item.product.retailPrice * item.quantity,
+  );
 }

@@ -2,15 +2,16 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final wishlistProvider =
-    StateNotifierProvider<WishlistNotifier, Set<int>>((ref) {
+final wishlistProvider = StateNotifierProvider<WishlistNotifier, Set<String>>((
+  ref,
+) {
   return WishlistNotifier();
 });
 
-class WishlistNotifier extends StateNotifier<Set<int>> {
+class WishlistNotifier extends StateNotifier<Set<String>> {
   WishlistNotifier() : super({});
 
-  void toggle(int productId) {
+  void toggle(String productId) {
     if (state.contains(productId)) {
       state = Set.from(state)..remove(productId);
     } else {
@@ -18,5 +19,5 @@ class WishlistNotifier extends StateNotifier<Set<int>> {
     }
   }
 
-  bool isWishlisted(int productId) => state.contains(productId);
+  bool isWishlisted(String productId) => state.contains(productId);
 }

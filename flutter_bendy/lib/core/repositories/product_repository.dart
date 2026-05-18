@@ -21,8 +21,8 @@ class ProductRepository {
   // ── Products ─────────────────────────────────────────────────────────────
 
   Future<List<Product>> getProducts({
-    int? categoryId,
-    int? subCategoryId,
+    String? categoryId,
+    String? subCategoryId,
   }) async {
     try {
       final queryParams = <String, dynamic>{};
@@ -54,7 +54,7 @@ class ProductRepository {
     return result;
   }
 
-  Future<Product?> getProductById(int id) async {
+  Future<Product?> getProductById(String id) async {
     try {
       final response = await _dio.get('products/$id');
       if (response.statusCode == 200) {
@@ -101,49 +101,82 @@ class ProductRepository {
 
   Future<List<Category>> getCategories() async {
     try {
-      final response = await _dio.get('categories');
+      final response = await _dio.get('Categories/GetAll');
       if (response.statusCode == 200) {
         final List data = response.data as List;
+        print(response);
         if (data.isNotEmpty) {
+          print("API Categories: ${data.length}");
           return data.map((e) {
-            final subs = (e['subCategories'] as List? ?? [])
-                .map((s) => SubCategory.fromJson(s))
-                .toList();
+            // API returns CategoryDTO (id, name, icon, order)
             return Category.fromJson(
               e,
               color: _colorFor(e['id']),
               fallbackIcon: _iconFor(e['id']),
-              subCategories: subs,
             );
           }).toList();
         }
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      print("CATEGORY API ERROR: $e");
+      print(stack);
+    }
 
     return mockCategories;
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  Future<List<SubCategory>> getSubCategories(String categoryId) async {
+    try {
+      final response = await _dio.get(
+        'Subcategories/GetAll',
+        queryParameters: {'categoryId': categoryId},
+      );
+      if (response.statusCode == 200) {
+        final List data = response.data as List;
+        if (data.isNotEmpty) {
+          return data.map((e) => SubCategory.fromJson(e)).toList();
+        }
+      }
+    } catch (_) {}
 
-  static Color _colorFor(dynamic id) {
-    const map = {
-      1: Color(0xFF1565C0),
-      2: Color(0xFF2E7D32),
-      3: Color(0xFFBF360C),
-      4: Color(0xFF4A148C),
-      5: Color(0xFF006064),
-    };
-    return map[id as int? ?? 0] ?? const Color(0xFF1565C0);
+    // Fallback: filter mock data
+    try {
+      final subs = mockCategories
+          .firstWhere((c) => c.id == categoryId)
+          .subCategories;
+      return subs;
+    } catch (_) {
+      return [];
+    }
   }
 
-  static IconData _iconFor(dynamic id) {
-    switch (id as int? ?? 0) {
-      case 1: return Icons.electrical_services_rounded;
-      case 2: return Icons.battery_charging_full_rounded;
-      case 3: return Icons.hardware_rounded;
-      case 4: return Icons.shield_rounded;
-      case 5: return Icons.content_cut_rounded;
-      default: return Icons.category_rounded;
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  static Color _colorFor(String id) {
+    const map = {
+      '0a5f0b3a-1f11-4a0b-8ee5-9c8f1d912345': Color(0xFF1565C0),
+      'f8a6b22e-3d4c-4f0b-9c6f-1a2a3b4c5d6e': Color(0xFF2E7D32),
+      '51ba27d7-6ed9-4d57-91c8-2b3c4d5e6f7a': Color(0xFFBF360C),
+      '60d33e62-0f2b-4701-9e0a-3b4c5d6e7f8a': Color(0xFF4A148C),
+      '7d40c393-a2b7-4f3d-b9c1-4e5f6a7b8c9d': Color(0xFF006064),
+    };
+    return map[id] ?? const Color(0xFF1565C0);
+  }
+
+  static IconData _iconFor(String id) {
+    switch (id) {
+      case '0a5f0b3a-1f11-4a0b-8ee5-9c8f1d912345':
+        return Icons.electrical_services_rounded;
+      case 'f8a6b22e-3d4c-4f0b-9c6f-1a2a3b4c5d6e':
+        return Icons.battery_charging_full_rounded;
+      case '51ba27d7-6ed9-4d57-91c8-2b3c4d5e6f7a':
+        return Icons.hardware_rounded;
+      case '60d33e62-0f2b-4701-9e0a-3b4c5d6e7f8a':
+        return Icons.shield_rounded;
+      case '7d40c393-a2b7-4f3d-b9c1-4e5f6a7b8c9d':
+        return Icons.content_cut_rounded;
+      default:
+        return Icons.category_rounded;
     }
   }
 }
